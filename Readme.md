@@ -1,0 +1,2 @@
+## Overview
+Gym Manager Backend is a robust Node.js application tailored to streamline gym operations. It offers comprehensive APIs for managing memberships, scheduling classes, tracking attendance, and overseeing staff. The application aims to enhance efficiency and provide insightful reporting and analytics for gym administrators.

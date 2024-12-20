@@ -1,0 +1,16 @@
+{
+  "name": "gym-manager",
+  "version": "1.0.0",
+  "description": "A backend for Gym Management application.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Gym",
+    "Manager",
+    "Backend"
+  ],
+  "author": "Aakib Saifi",
+  "license": "ISC"
+}
