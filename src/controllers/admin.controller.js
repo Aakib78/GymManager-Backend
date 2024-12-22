@@ -3,6 +3,7 @@ import { ApiError } from "../utils/api_error.js"
 import { Admin } from "../models/admin.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/api_response.js";
+import { sendNotification } from "../utils/one_signal.js";
 import jwt from "jsonwebtoken"
 import { ROLE_PERMISSIONS } from "../constants.js";
 
@@ -27,69 +28,63 @@ const generateAccessAndRefereshTokens = async (adminId) => {
 }
 
 const registerAdminUser = asyncHandler(async (req, res) => {
-
-    try {
-        
-        const { fullName, email, username, password, phonenumber, role } = req.body
-        if (
-            [fullName, username,email, phonenumber,password,role].some((field) => field?.trim() === "")
-        ) {
-            throw new ApiError(400, "All fields are required")
+    const { fullName, email, username, password, phonenumber, role } = req.body
+    const fields = [fullName, username, email, phonenumber, password, role];
+    const fieldNames = ["FullName", "Username", "Email", "Phonenumber", "Password", "Role"];
+    fields.forEach((field, index) => {
+        if (!field || field.trim() === "") {
+            throw new ApiError(400, `${fieldNames[index]} is required.`);
         }
+    });
+    
+    const existedAdminUser = await Admin.findOne({
+        $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }, { phonenumber }]
+    })
 
-        const existedAdminUser = await Admin.findOne({
-            $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }, { phonenumber }]
-        })
-
-        if (existedAdminUser) {
-            throw new ApiError(409, "User with this username, email, or phone number already exists")
-        }
-
-        let avatarLocalPath;
-        if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
-            avatarLocalPath = req.files.avatar[0].path
-        }
-
-        const avatar = await uploadOnCloudinary(avatarLocalPath)
-
-        const selectedRole = role || "Manager";
-        const permissions = ROLE_PERMISSIONS[selectedRole];
-
-        if (!permissions) {
-            throw new ApiError(400, "Invalid role provided");
-        }
-
-        const admin = await Admin.create({
-            fullName: fullName,
-            email: email.trim().toLowerCase(),
-            username: username.trim().toLowerCase(),
-            password: password.trim(),
-            phonenumber: phonenumber.trim(),
-            avatar: avatar?.url || "",
-            role: selectedRole,
-            permissions: permissions
-        })
-
-        const createdUser = await Admin.findById(admin._id).select(
-            "-password -refreshToken"
-        )
-
-        if (!createdUser) {
-            throw new ApiError(500, "Unable to register user. Something went wrong!!")
-        }
-
-        return res.status(201).json(
-            new ApiResponse(200, createdUser, "User registered Successfully")
-        )
-    } catch (error) {
-        if (error.name === 'ValidationError') {
-            const messages = Object.values(error.errors).map(err => err.message);
-            throw new ApiError(500, messages.at(0));
-        }
-         return res.status(500).json(
-             new ApiError(500, error.message)
-        )
+    if (existedAdminUser) {
+        throw new ApiError(409, "User with this username, email, or phone number already exists")
     }
+
+    let avatar;
+    if (!req.files || !req.files.avatar || req.files.avatar.length === 0) {
+        avatar = null
+    } else {
+        const avatarPath = req.files?.avatar[0]?.path;
+        avatar = await uploadOnCloudinary(avatarPath);
+        if (!avatar) {
+            throw new ApiError(400, "Unable to upload profile image.")
+        }
+    }
+
+    const selectedRole = role || "Manager";
+    const permissions = ROLE_PERMISSIONS[selectedRole];
+
+    if (!permissions) {
+        throw new ApiError(400, "Invalid role provided");
+    }
+
+    const admin = await Admin.create({
+        fullName: fullName,
+        email: email.trim().toLowerCase(),
+        username: username.trim().toLowerCase(),
+        password: password.trim(),
+        phonenumber: phonenumber.trim(),
+        avatar: avatar?.url,
+        role: selectedRole,
+        permissions: permissions
+    })
+
+    const createdUser = await Admin.findById(admin._id).select(
+        "-password -refreshToken"
+    )
+
+    if (!createdUser) {
+        throw new ApiError(500, "Unable to register user. Something went wrong!!")
+    }
+
+    return res.status(201).json(
+        new ApiResponse(200, createdUser, "User registered Successfully")
+    )
 })
 
 const loginAdminUser = asyncHandler(async (req, res) => {
@@ -106,7 +101,7 @@ const loginAdminUser = asyncHandler(async (req, res) => {
     })
 
     if (!adminUser) {
-        throw new ApiError(404, "User does not exist")
+        throw new ApiError(404, "User does not exist with this User Id")
     }
 
     const isPasswordValid = await adminUser.isPasswordCorrect(password)

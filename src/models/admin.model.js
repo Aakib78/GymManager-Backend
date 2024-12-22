@@ -10,7 +10,8 @@ const adminSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
-            index: true
+            index: true,
+            match: [/^[a-z0-9._]+$/, 'Username can only contain lowercase letters, numbers, dots, and underscores'],
         },
         email: {
             type: String,
@@ -27,24 +28,24 @@ const adminSchema = new Schema(
         },
         phonenumber: {
             type: String,
-
             unique: true,
             validate: {
                 validator: function (v) {
                     return /^[6-9]\d{9}$/.test(v);
                 },
-                message: "Please enter a valid Indian phone number"
+                message: "Please enter a valid phone number"
             },
             required: [true, "Phone number is required"]
         },
         fullName: {
             type: String,
-            required: true,
+            required: [true, "Full Name is required"],
             trim: true,
             index: true
         },
         role: {
             type: String,
+            required: [true, "Role is required"],
             enum: ['SuperAdmin', 'Manager', 'Trainer'],
             default: 'Manager',
         },
@@ -53,7 +54,7 @@ const adminSchema = new Schema(
             canManageSubscriptions: { type: Boolean, default: false },
             canPostNotices: { type: Boolean, default: false },
             canViewReports: { type: Boolean, default: false },
-            canAssignPlans: { type: Boolean, default: false },
+            canAssignPlans: { type: Boolean, default: false }
         },
         avatar: {
             type: String,
