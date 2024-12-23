@@ -1,8 +1,11 @@
 import { asyncHandler } from "../utils/async_handler.js";
 import { ApiError } from "../utils/api_error.js"
 import { User } from "../models/user.model.js"
+import { Subscription } from "../models/subscription.model.js"
+import { UserSubscription } from "../models/user-subscription.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/api_response.js";
+import moment from "moment";
 import jwt from "jsonwebtoken"
 // import mongoose from "mongoose";
 
@@ -25,37 +28,45 @@ const generateAccessAndRefereshTokens = async (userId) => {
 }
 
 const registerUser = asyncHandler(async (req, res) => {
-
-    const { fullName, email, username, password, phonenumber } = req.body
-
-    if (
-        [fullName, email, username, password,phonenumber].some((field) => field?.trim() === "")
-    ) {
-        throw new ApiError(400, "All fields are required")
-    }
+    const { fullName, email, username, password, phonenumber,dateOfBirth,gender} = req.body
+    const fields = [fullName, username, email, phonenumber, password,dateOfBirth,gender];
+    const fieldNames = ["FullName", "Username", "Email", "Phonenumber", "Password","Date of Birth","Gender"];
+    fields.forEach((field, index) => {
+        if (!field || field.trim() === "") {
+            throw new ApiError(400, `${fieldNames[index]} is required.`);
+        }
+    });
 
     const existedUser = await User.findOne({
-        $or: [{ username },{ email },{phonenumber}]
+        $or: [{ username: username.toLowerCase() }, { email: email.toLowerCase() }, {phonenumber}]
     })
 
     if (existedUser) {
-        throw new ApiError(409, "User with email or username or phonenumber already exists")
+        throw new ApiError(409, "User with this User ID already exists")
     }
 
-    let avatarLocalPath;
-    if (req.files && Array.isArray(req.files.avatar) && req.files.avatar.length > 0) {
-        avatarLocalPath = req.files.avatar[0].path
+    let avatar;
+    if (!req.files || !req.files.avatar || req.files.avatar.length === 0) {
+        avatar = null
+        console.log("avatar1");
+    } else {
+        console.log("avatar2");
+        const avatarPath = req.files?.avatar[0]?.path;
+        avatar = await uploadOnCloudinary(avatarPath);
+        if (!avatar) {
+            throw new ApiError(400, "Unable to upload profile image.")
+        }
     }
-
-    const avatar = await uploadOnCloudinary(avatarLocalPath)
 
     const user = await User.create({
-        fullName,
-        avatar: avatar?.url || "",
-        email,
-        password,
-        phonenumber,
-        username: username.toLowerCase()
+        fullName:fullName,
+        avatar: avatar?.url,
+        email:email,
+        password:password,
+        phonenumber:phonenumber,
+        dateOfBirth:dateOfBirth,
+        gender:gender,
+        username: username.toLowerCase(),
     })
 
     const createdUser = await User.findById(user._id).select(
@@ -74,7 +85,6 @@ const registerUser = asyncHandler(async (req, res) => {
 
 const loginUser = asyncHandler(async (req, res) => {
     const { email, username,phonenumber, password } = req.body
-    console.log(email,username,phonenumber);
 
     const identifier = email || username || phonenumber;
 
@@ -100,7 +110,13 @@ const loginUser = asyncHandler(async (req, res) => {
 
     const { accessToken, refreshToken } = await generateAccessAndRefereshTokens(user._id)
 
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    const loggedInUser = await User.findById(user._id).populate({
+        path: 'current_subscription',
+        populate: {
+            path: 'subscription',
+            model: 'Subscription',
+        },
+    }).select("-password -refreshToken")
 
     const options = {
         httpOnly: true,
@@ -115,7 +131,7 @@ const loginUser = asyncHandler(async (req, res) => {
             new ApiResponse(
                 200,
                 {
-                    user: loggedInUser, accessToken, refreshToken
+                    profile: loggedInUser, accessToken, refreshToken
                 },
                 "User logged In Successfully"
             )
@@ -152,7 +168,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
 
     if (!incomingRefreshToken) {
-        throw new ApiError(401, "unauthorized request")
+        throw new ApiError(401, "Unauthorized request")
     }
 
     try {
@@ -253,6 +269,50 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
         .json(
             new ApiResponse(200, user, "Avatar image updated successfully")
         )
+})
+
+const addUserSubscription = asyncHandler(async (req, res) => {
+    const { subscription_id } = req.body
+        
+    const subscription = await Subscription.findById(subscription_id);
+
+    if (!subscription) {
+        throw new ApiError(404, "Subscription not found.");
+    }
+
+    const activeSubscription = await UserSubscription.findOne({
+        user_id: req.user._id,
+        end_date: { $gt: moment().toDate() }, // Check if the end_date is in the future
+    });
+    console.log(activeSubscription);
+
+    if (activeSubscription) {
+        throw new ApiError(400, "User already has an active subscription.");
+    }
+
+    const startDate = moment().toDate();
+    const endDate = moment(startDate).add(subscription.duration, 'months').toDate();
+
+    const userSubscription = new UserSubscription({
+        user_id: req.user._id,
+        subscription: subscription,
+        start_date: startDate,
+        end_date: endDate,
+    });
+
+    await userSubscription.save();
+
+    const user = await User.findById(req.user._id);
+    user.current_subscription = userSubscription;
+    await user.save();
+
+    return res
+        .status(200)
+        .json(new ApiResponse(
+            200,
+            userSubscription,
+            "Subscription added successfully"
+        ))
 })
 
 // const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -417,4 +477,5 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateUserAvatar,
+    addUserSubscription
 }

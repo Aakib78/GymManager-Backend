@@ -6,9 +6,9 @@ import { Subscription } from "../models/subscription.model.js";
 
 
 const createSubscription = asyncHandler(async (req, res) => {
-    const { title, description, deffered_price, offer_price } = req.body
+    const { title, description, deffered_price, offer_price,duration } = req.body
     if (
-        [title, description, deffered_price, offer_price].some((field) => field?.trim() === "")
+        [title, description, deffered_price, offer_price, duration].some((field) => field?.trim() === "")
     ) {
         throw new ApiError(400, "All fields are required")
     }
@@ -33,7 +33,8 @@ const createSubscription = asyncHandler(async (req, res) => {
         description: description.trim(),
         deffered_price: deffered_price.trim(),
         offer_price: offer_price.trim(),
-        promotional_image: promotionalImage.url
+        promotional_image: promotionalImage.url,
+        duration: duration
     })
     return res.status(201).json(
         new ApiResponse(200, subscription, "Subscription added Successfully")
@@ -81,7 +82,7 @@ const updateSubscription = asyncHandler(async (req,res) => {
     if (!subscriptionId) {
         throw new ApiError(400, "Subscription ID is required.")
     }
-    const { title, description, deffered_price, offer_price } = req.body;
+    const { title, description, deffered_price, offer_price,duration } = req.body;
     const subscription = await Subscription.findById(subscriptionId);
 
     if (!subscription) {
@@ -92,6 +93,7 @@ const updateSubscription = asyncHandler(async (req,res) => {
     if (description) subscription.description = description.trim();
     if (deffered_price) subscription.deffered_price = deffered_price.trim();
     if (offer_price) subscription.offer_price = offer_price.trim();
+    if (duration) subscription.duration = duration.trim();
 
    
     let newPromotionalImage;

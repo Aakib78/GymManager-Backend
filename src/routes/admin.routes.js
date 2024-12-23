@@ -37,7 +37,6 @@ router.route("/avatar").patch(verifyJWT, upload.single("avatar"), updateAdminUse
 import {
     createSubscription,
     deleteSubscription,
-    fetchAllSubscription,
     updateSubscription
 } from "../controllers/subscription.controller.js";
 
@@ -46,8 +45,6 @@ router.route("/create-subscription").post(verifyJWT,
     upload.fields([{ name: "promotional_image", maxCount: 1 }]), createSubscription)
 
 router.route("/delete-subscription/:subscriptionId?").delete(verifyJWT, checkRolePermission('canManageSubscriptions'), deleteSubscription)
-
-router.route("/subscriptions").get(verifyJWT, checkRolePermission('canManageSubscriptions'), fetchAllSubscription)
 
 router.route("/update-subscription/:subscriptionId?").put(verifyJWT, checkRolePermission('canManageSubscriptions'), upload.fields([{ name: "promotional_image", maxCount: 1 }]), updateSubscription)
 

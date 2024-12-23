@@ -22,6 +22,10 @@ const subscriptionSchema = new Schema(
             type: String, // cloudinary url
             required: true,
         },
+        duration: {
+            type: Number,
+            required: true, // Represents the duration in months
+        },
     },
     {
         timestamps: true

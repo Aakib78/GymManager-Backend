@@ -42,7 +42,7 @@ const registerAdminUser = asyncHandler(async (req, res) => {
     })
 
     if (existedAdminUser) {
-        throw new ApiError(409, "User with this username, email, or phone number already exists")
+        throw new ApiError(409, "User with this User ID already exists")
     }
 
     let avatar;

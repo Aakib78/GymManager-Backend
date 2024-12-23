@@ -10,33 +10,58 @@ const userSchema = new Schema(
             unique: true,
             lowercase: true,
             trim: true,
-            index: true
+            index: true,
+            match: [/^[a-z0-9._]+$/, 'Username can only contain lowercase letters, numbers, dots, and underscores'],
         },
         email: {
             type: String,
-            required: true,
-            unique: true,
-            lowecase: true,
+            required: [true, "Email is required"],
             trim: true,
+            lowercase: true,
+            unique: true,
+            validate: {
+                validator: function (v) {
+                    return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(v);
+                },
+                message: "Please enter a valid email"
+            },
         },
         fullName: {
             type: String,
-            required: true,
+            required: [true, "Full Name is required"],
             trim: true,
             index: true
         },
         phonenumber: {
             type: String,
-            required: true,
-            trim: true,
-            index: true
+            unique: true,
+            validate: {
+                validator: function (v) {
+                    return /^[6-9]\d{9}$/.test(v);
+                },
+                message: "Please enter a valid phone number"
+            },
+            required: [true, "Phone number is required"]
         },
         dateOfBirth: {
-            type: String 
+            type: Date,
+            required: [true, "Date of birth is required"],
+            validate: {
+                validator: function (value) {
+                    const today = new Date();
+                    const ageLimit = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+                    return value <= ageLimit; // Ensure the date is at least 18 years ago
+                },
+                message: "You must be at least 18 years old"
+            }
         },
         gender: {
             type: String,
-            enum: ['Male', 'Female', 'Other'] 
+            required: [true, "Gender is required"],
+            enum: {
+                values: ['Male', 'Female', 'Other'],
+                message: '{VALUE} is not a valid gender'
+            },
         },
         avatar: {
             type: String,
