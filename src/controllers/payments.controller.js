@@ -43,13 +43,16 @@ const createSubscriptionPaymentOrder = asyncHandler(async (req, res) => {
 const verifySubscriptionPayment = asyncHandler(async (req, res) => {
     const { payment_id, order_id, signature } = req.body
     
-    // const expectedSignature = verifyPaymentSignature({
-    //     razorpay_payment_id: razorpay_payment_id,   
-    //     razorpay_order_id: razorpay_order_id,
-    //     razorpay_signature: razorpay_signature
-    // }); 
+    const expectedSignature = verifyPaymentSignature({
+        razorpay_payment_id: payment_id,   
+        razorpay_order_id: order_id,
+        razorpay_signature: signature
+    }); 
+
+    if (expectedSignature===false) {
+        throw new ApiError(400, "Invalid payment signature");
+    }
    
-    const expectedSignature =true // for testing purpose
     const order = await Order.findOne({
         $or: [{ order_id: order_id }]
         })
