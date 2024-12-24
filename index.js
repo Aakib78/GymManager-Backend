@@ -1,7 +1,7 @@
 import dotenv from 'dotenv';
-import connectDB from './db/db_connection.js';
-import { app } from './app.js';
-import './jobs/subscription.cron.js';
+import connectDB from './src/db/db_connection.js';
+import { app } from './src/app.js';
+import './src/jobs/subscription.cron.js';
 
 dotenv.config({
     path: './env'
