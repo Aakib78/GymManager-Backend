@@ -7,8 +7,8 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/api_response.js";
 import moment from "moment";
 import jwt from "jsonwebtoken"
-// import mongoose from "mongoose";
-
+import mongoose from "mongoose";
+import { populateUserSubscription } from "../constants.js";
 
 const generateAccessAndRefereshTokens = async (userId) => {
     try {
@@ -273,6 +273,10 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const addUserSubscription = asyncHandler(async (req, res) => {
     const { subscription_id } = req.body
+
+    if (!mongoose.Types.ObjectId.isValid(subscription_id)) {
+        throw new ApiError(400, "Invalid Subscription ID.")
+    }
         
     const subscription = await Subscription.findById(subscription_id);
 
@@ -313,6 +317,41 @@ const addUserSubscription = asyncHandler(async (req, res) => {
             userSubscription,
             "Subscription added successfully"
         ))
+})
+
+const fetchAllUsers = asyncHandler(async (req, res) => {
+
+    const excludeFields = '-password -refreshToken'; 
+    const users = await User.find({}, excludeFields).populate(populateUserSubscription);
+
+    if(!users){
+        throw new ApiError(404, "No users found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, users, "Users succesfully fetched.")
+        )
+})
+
+const deleteUser = asyncHandler(async (req, res) => {
+    const userId = req.params.userId;
+
+    if(!mongoose.Types.ObjectId.isValid(userId)){
+        throw new ApiError(400, "Invalid User ID.")
+    }
+    const user = await User.findByIdAndDelete(userId);
+
+    if (!user) {
+        throw new ApiError(404, "User not found")
+    }
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(200, "Users succesfully deleted.")
+        )
 })
 
 // const updateAccountDetails = asyncHandler(async (req, res) => {
@@ -477,5 +516,7 @@ export {
     changeCurrentPassword,
     getCurrentUser,
     updateUserAvatar,
-    addUserSubscription
+    addUserSubscription,
+    fetchAllUsers,
+    deleteUser
 }

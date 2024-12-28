@@ -251,7 +251,7 @@ const updateAdminUserAvatar = asyncHandler(async (req, res) => {
     }
 
     const adminUser = await Admin.findByIdAndUpdate(
-        req.admin?._id,
+        req.user?._id,
         {
             $set: {
                 avatar: avatar.url

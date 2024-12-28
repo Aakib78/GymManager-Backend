@@ -18,11 +18,13 @@ app.use(cookieParser());
 import userRouter from './routes/user.routes.js';
 import adminRouter from './routes/admin.routes.js';
 import paymentsRouter from './routes/payment.routes.js';
+import attendanceRouter from './routes/attendance.routes.js';
 
 //Routes Declaration
 app.use("/api/v1/users", userRouter)
 app.use("/api/v1/admin", adminRouter)
 app.use("/api/v1/payments", paymentsRouter)
+app.use("/api/v1/attendance", attendanceRouter)
 
 //Error Handler
 app.use(errorHandler);

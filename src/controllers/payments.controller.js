@@ -24,7 +24,7 @@ const createSubscriptionPaymentOrder = asyncHandler(async (req, res) => {
         amount: amount,
         currency: currency,
         receipt: result.receipt,
-        status: 'pending',
+        status: 'Pending',
         payment_id: null
     });
 
@@ -70,7 +70,7 @@ const verifySubscriptionPayment = asyncHandler(async (req, res) => {
         payment_id:payment_id,
         order_id: order_id,
         payment_signature: signature,
-        payment_status: 'paid',
+        payment_status: 'Paid',
     });
     const savedPayment = await paymentHirtory.save();
 

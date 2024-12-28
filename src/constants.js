@@ -23,3 +23,11 @@ export const ROLE_PERMISSIONS = {
         canAssignPlans: true,
     },
 };
+
+export const populateUserSubscription = {
+    path: 'current_subscription', // Populate the current_subscription field
+    populate: {
+        path: 'subscription',
+        select: 'title duration',
+    }
+}
