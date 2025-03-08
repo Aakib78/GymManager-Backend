@@ -6,7 +6,8 @@ import {
     refreshAccessToken,
     changeCurrentPassword,
     getCurrentAdminUser,
-    updateAdminUserAvatar
+    updateAdminUserAvatar,
+    sendFirebaseNotification
 } from "../controllers/admin.controller.js";
 
 import { upload } from "../middlewares/multer.middleware.js"
@@ -57,5 +58,7 @@ import {
 router.route("/fetch-all-users").get(verifyJWT, checkRolePermission('canManageUsers'), fetchAllUsers)
 
 router.route("/delete-user/:userId").delete(verifyJWT, checkRolePermission('canManageUsers'), deleteUser)
+
+router.route("/sentFirebaseNotification").post(sendFirebaseNotification)
 
 export default router
