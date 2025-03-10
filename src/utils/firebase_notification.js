@@ -1,5 +1,8 @@
 import FirebaseAdmin from "firebase-admin";
-import serviceAccount from '../../serviceaccount.json' assert { type: 'json' };
+import { readFile } from 'fs/promises';
+const serviceAccount = JSON.parse(
+    await readFile(new URL('../../serviceaccount.json', import.meta.url), 'utf-8')
+);
 
 /* Usage 
  const result = await sendFirebaseNotification({
