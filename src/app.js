@@ -6,6 +6,10 @@ import { errorHandler } from './middlewares/error-handler.middleware.js';
 
 const app = express();
 
+app.get('/', (req, res) => {
+    res.send('<h1>Server is running</h1>');
+    }
+);
 
 app.use(cors({origin: process.env.CORS_ORIGIN,credentials: true}));
 app.use(express.json({limit: '16kb'}));
