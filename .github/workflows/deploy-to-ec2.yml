@@ -41,6 +41,12 @@ jobs:
       - name: Pull Image from DockerHub
         run: docker pull lazybird78/gym-manager-docker-image:latest
 
+      - name: Ensure serviceaccount.json exists
+        run: |
+          mkdir -p /home/ec2-user/app
+          echo '${{ secrets.SERVECE_ACCOUNT_JSON }}' > /home/ec2-user/app/serviceaccount.json
+          chmod 600 /home/ec2-user/app/serviceaccount.json  # Secure the file
+
       - name: Stop and Remove Old Container
         run: |
           sudo docker stop gym-manager-container || true
@@ -49,7 +55,7 @@ jobs:
       - name: Run New Container
         run: |
           sudo docker run -d -p ${{ secrets.PORT }}:${{ secrets.PORT }} --name gym-manager-container \
-            -v $(pwd)/serviceaccount.json:/app/serviceaccount.json \
+           -v /home/ec2-user/app/serviceaccount.json:/app/serviceaccount.json \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} \
             -e ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} \
