@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo chmod -R 777 /home/ubuntu/my-gym-manager
+
 # Navigate to working directory where all github files are stored
 cd /home/ubuntu/my-gym-manager
 
