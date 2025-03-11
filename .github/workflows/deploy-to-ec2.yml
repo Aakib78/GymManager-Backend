@@ -43,7 +43,15 @@ jobs:
 
       - name: Create serviceaccount.json file
         run: |
-          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > serviceaccount.json
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' | jq . > serviceaccount.json
+
+      - name: Verify serviceaccount.json
+        run: |
+          echo "Checking serviceaccount.json path..."
+          echo "File path: $(pwd)/serviceaccount.json"
+          ls -l $(pwd)/serviceaccount.json
+          cat serviceaccount.json
+          jq . serviceaccount.json
 
       - name: Stop and Remove Old Container
         run: |
