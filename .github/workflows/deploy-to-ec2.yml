@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    runs-on: [ubuntu-latest]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -41,6 +41,10 @@ jobs:
       - name: Pull Image from DockerHub
         run: docker pull lazybird78/gym-manager-docker-image:latest
 
+      - name: Create serviceaccount.json file
+        run: |
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > serviceaccount.json
+
       - name: Stop and Remove Old Container
         run: |
           sudo docker stop gym-manager-container || true
@@ -49,6 +53,7 @@ jobs:
       - name: Run New Container
         run: |
           sudo docker run -d -p ${{ secrets.PORT }}:${{ secrets.PORT }} --name gym-manager-container \
+            -v $(pwd)/serviceaccount.json:/app/serviceaccount.json \
             -e MONGO_URI=${{ secrets.MONGO_URI }} \
             -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} \
             -e ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} \
