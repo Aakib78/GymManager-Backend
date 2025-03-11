@@ -21,6 +21,9 @@ jobs:
       - name: Build Docker image
         run: docker build -t lazybird78/gym-manager-docker-image .
 
+      - name: Tag Docker image
+        run: docker tag lazybird78/gym-manager-docker-image lazybird78/gym-manager-docker-image:latest
+
       - name: Push Docker image
         run: docker push lazybird78/gym-manager-docker-image:latest
 
@@ -28,12 +31,41 @@ jobs:
     needs: build
     runs-on: [aws-ec2]
     steps:
+      - name: Ensure Docker is Running
+        run: |
+          if (! sudo systemctl is-active --quiet docker); then
+            echo "Docker is not running. Starting it now..."
+            sudo systemctl restart docker
+          fi
+
       - name: Pull Image from DockerHub
         run: docker pull lazybird78/gym-manager-docker-image:latest
 
-      - name: Delete Old Container
-        run: docker rm -f gym-manager-container
+      - name: Stop and Remove Old Container
+        run: |
+          sudo docker stop gym-manager-container || true
+          sudo docker rm -f gym-manager-container || true
 
       - name: Run New Container
-        run: docker run -d -p 3000:3000 --name gym-manager-container lazybird78/gym-manager-docker-image
+        run: |
+          sudo docker run -d -p ${{ secrets.PORT }}:${{ secrets.PORT }} --name gym-manager-container \
+            -e MONGO_URI=${{ secrets.MONGO_URI }} \
+            -e CORS_ORIGIN=${{ secrets.CORS_ORIGIN }} \
+            -e ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }} \
+            -e ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }} \
+            -e REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }} \
+            -e REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }} \
+            -e CLOUDINARY_CLOUD_NAME=${{ secrets.CLOUDINARY_CLOUD_NAME }} \
+            -e CLOUDINARY_API_KEY=${{ secrets.CLOUDINARY_API_KEY }} \
+            -e CLOUDINARY_API_SECRET=${{ secrets.CLOUDINARY_API_SECRET }} \
+            -e ONESIGNAL_APP_AUTH_KEY=${{ secrets.ONESIGNAL_APP_AUTH_KEY }} \
+            -e ONESIGNAL_APP_ID=${{ secrets.ONESIGNAL_APP_ID }} \
+            -e RAZORPAY_KEY_ID=${{ secrets.RAZORPAY_KEY_ID }} \
+            -e RAZORPAY_KEY_SECRET=${{ secrets.RAZORPAY_KEY_SECRET }} \
+            -e PORT=${{ secrets.PORT }} \
+            --restart unless-stopped \
+            lazybird78/gym-manager-docker-image:latest
+
+      - name: Cleanup Unused Docker Images
+        run: sudo docker image prune -af
       
