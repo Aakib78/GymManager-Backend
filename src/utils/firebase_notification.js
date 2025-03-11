@@ -1,8 +1,12 @@
 import FirebaseAdmin from "firebase-admin";
 import { readFile } from 'fs/promises';
-const serviceAccount = JSON.parse(
-    await readFile(new URL('../../serviceaccount.json', import.meta.url), 'utf-8')
-);
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const serviceAccountPath = path.resolve(__dirname, '../../../serviceaccount.json');
+
+const serviceAccount = JSON.parse(await readFile(serviceAccountPath, 'utf-8'));
 
 /* Usage 
  const result = await sendFirebaseNotification({
