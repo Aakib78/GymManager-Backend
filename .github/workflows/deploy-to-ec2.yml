@@ -1,1 +1,36 @@
+name: Deployment to EC2
 
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v3
+
+      - name: Login to DockerHub
+        run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build Docker image
+        run: docker build -t lazybird78/gym-manager-docker-image .
+
+        - name: Push Docker image
+        run: docker push lazybird78/gym-manager-docker-image:latest
+
+  deploy:
+    needs: build
+    runs-on: [aws-ec2]
+    steps:
+      - name: Pull Image from DockerHub
+        run: docker pull lazybird78/gym-manager-docker-image:latest
+
+      - name: Delete Old Container
+        run: docker rm -f gym-manager-container
+
+      - name: Run New Container
+        run: docker run -d -p 3000:3000 --name gym-manager-container lazybird78/gym-manager-docker-image
+      
