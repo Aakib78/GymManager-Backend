@@ -41,8 +41,11 @@ jobs:
       - name: Pull Image from DockerHub
         run: docker pull lazybird78/gym-manager-docker-image:latest
 
-      - name: Recreate serviceaccount.json
-        run: echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/ec2-user/app/serviceaccount.json
+      - name: Ensure serviceaccount.json exists
+        run: |
+          mkdir -p /home/ec2-user/app
+          echo '${{ secrets.SERVICE_ACCOUNT_JSON }}' > /home/ec2-user/app/serviceaccount.json
+          chmod 600 /home/ec2-user/app/serviceaccount.json  # Secure the file
 
       - name: Stop and Remove Old Container
         run: |
