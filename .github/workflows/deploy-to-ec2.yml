@@ -29,7 +29,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: [aws-ec2]
+    runs-on: aws-ec2
     steps:
       - name: Ensure Docker is Running
         run: |
