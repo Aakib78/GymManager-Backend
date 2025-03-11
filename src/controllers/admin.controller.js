@@ -4,7 +4,7 @@ import { Admin } from "../models/admin.model.js"
 import { uploadOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponse } from "../utils/api_response.js";
 import { sendNotification } from "../utils/one_signal.js";
-import { sendFBNotification } from "../utils/firebase_notification.js";
+// import { sendFBNotification } from "../utils/firebase_notification.js";
 import jwt from "jsonwebtoken"
 import { ROLE_PERMISSIONS } from "../constants.js";
 
@@ -277,7 +277,7 @@ const sendFirebaseNotification = asyncHandler(async (req, res) => {
     console.log('Sending notification to:', title, body, token);
 
     try {
-        const response = await sendFBNotification(token, title, body, data);
+        const response = await sendNotification(token, title, body, data);
         return res
             .status(200)
             .json(
