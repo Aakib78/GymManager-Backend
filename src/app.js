@@ -7,7 +7,7 @@ import { errorHandler } from './middlewares/error-handler.middleware.js';
 const app = express();
 
 app.get('/', (req, res) => {
-    res.send('<h1>Server is running</h1><p>Current Verion : 1.0.0</p>');
+    res.send('<h1>Server is running</h1><p>Current Verion : 1.0.1</p>');
     }
 );
 
